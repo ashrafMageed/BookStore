@@ -93,6 +93,7 @@ namespace Books.API.Controllers
             Price = bookForUpdate.Price;
             Title = bookForUpdate.Title;
         }
+        //testing Azure deployment
     }
 
     public class Author
