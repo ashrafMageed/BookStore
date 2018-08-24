@@ -29,18 +29,6 @@ namespace Books.API.Controllers
         {
             return Ok(_context.ShippingManifests.ToList());
         }
-
-        // [HttpGet("{id}")]
-        // public ActionResult Get(string id)
-        // {
-        //     var book = _context.PurchaseOrders.FirstOrDefault(x => x.Id == id);
-            
-        //     if(book == null)
-        //         return NotFound();
-
-        //     return Ok(book);
-        // }
-
         
     }
 

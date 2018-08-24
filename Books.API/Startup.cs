@@ -1,14 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Books.API.Controllers;
 using Books.API.Controllers.Messaging;
 using Books.API.ShippingService;
+using Microsoft.AspNetCore.Authentication.Extensions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
@@ -47,6 +51,21 @@ namespace Books.API
             
             services.AddSingleton<InMemoryMessageBus>(bus);
 
+            // services.AddAuthentication(options =>
+            //   {
+            //     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            //   })
+            //     .AddJwtBearer(jwtOptions =>
+            //     {
+            //       jwtOptions.Authority = $"https://login.microsoftonline.com/tfp/{Configuration["AzureAdB2C:Tenant"]}/{Configuration["AzureAdB2C:Policy"]}/v2.0/";
+            //       jwtOptions.Audience = Configuration["AzureAdB2C:ClientId"];
+            //       jwtOptions.Events = new JwtBearerEvents
+            //       {
+            //         OnAuthenticationFailed = AuthenticationFailed
+            //       };
+            //     });
+
+                services.AddAzureAdB2CAuthentication();
 
             services.AddMvc(setupAction => {
                 
@@ -79,7 +98,20 @@ namespace Books.API
                 c.RoutePrefix = String.Empty;
             });
 
+            app.UseAuthentication();
+
+                        app.UseRewriter(new RewriteOptions().AddIISUrlRewrite(env.ContentRootFileProvider, "urlRewrite.config"));
+
             app.UseMvc();
+        }
+
+        private Task AuthenticationFailed(AuthenticationFailedContext arg)
+        {
+            // For debugging purposes only!
+            var s = $"AuthenticationFailed: {arg.Exception.Message}";
+            arg.Response.ContentLength = s.Length;
+            arg.Response.Body.Write(Encoding.UTF8.GetBytes(s), 0, s.Length);
+            return Task.FromResult(0);
         }
     }
 }
