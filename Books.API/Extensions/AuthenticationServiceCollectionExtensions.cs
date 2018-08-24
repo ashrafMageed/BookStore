@@ -19,7 +19,14 @@ namespace Microsoft.AspNetCore.Authentication.Extensions
                 sharedOptions.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
             })
             .AddCookie()
-            .AddOpenIdConnect();
+            .AddOpenIdConnect(o => 
+            {
+                o.ClientId = "c2e9a664-3bd1-41d4-9e20-bdedd30a7966";
+                o.CallbackPath = "/signin-oidc";
+                o.Authority = $"https://login.microsoftonline.com/tfp/BookStoreAD.onmicrosoft.com/B2C_1_DefaultSignInUpPolicy/v2.0";
+                o.UseTokenLifetime = true;
+
+            });
             
             return services;
         }

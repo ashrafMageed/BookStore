@@ -100,18 +100,11 @@ namespace Books.API
 
             app.UseAuthentication();
 
-                        app.UseRewriter(new RewriteOptions().AddIISUrlRewrite(env.ContentRootFileProvider, "urlRewrite.config"));
+            app.UseRewriter(new RewriteOptions().AddIISUrlRewrite(env.ContentRootFileProvider, "urlRewrite.config"));
 
             app.UseMvc();
         }
 
-        private Task AuthenticationFailed(AuthenticationFailedContext arg)
-        {
-            // For debugging purposes only!
-            var s = $"AuthenticationFailed: {arg.Exception.Message}";
-            arg.Response.ContentLength = s.Length;
-            arg.Response.Body.Write(Encoding.UTF8.GetBytes(s), 0, s.Length);
-            return Task.FromResult(0);
-        }
+        
     }
 }
