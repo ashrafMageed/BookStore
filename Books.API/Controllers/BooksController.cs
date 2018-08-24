@@ -13,7 +13,6 @@ namespace Books.API.Controllers
     [Route("[controller]")]
     public class BooksController : ControllerBase
     {
-        private static ConcurrentDictionary<string, Book> _books = new ConcurrentDictionary<string, Book>();
         private readonly ApiContext _context;
  
         public BooksController(ApiContext context)
@@ -24,7 +23,9 @@ namespace Books.API.Controllers
         [HttpGet]
         public ActionResult Get()
         {
-            return Ok(_context.Books.ToList());
+            var books = _context.Books.Select(x => new Book{ Authors = _context.Authors.Where(y => y.Id == x.Id).ToList(),
+            Id = x.Id, Price = x.Price, Title = x.Title, Publisher = x.Publisher, Year = x.Year });
+            return Ok(books);
         }
 
         [HttpGet("{id}")]

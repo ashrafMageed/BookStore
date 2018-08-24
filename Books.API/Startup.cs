@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Books.API.Controllers;
+using Books.API.Controllers.Messaging;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -29,6 +30,10 @@ namespace Books.API
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<ApiContext>(opt => opt.UseInMemoryDatabase("BooksDb"));
+            services.AddDbContext<OrderContext>(opt => opt.UseInMemoryDatabase("OrdersDb"));
+            
+            services.AddSingleton<InMemoryMessageBus>(new InMemoryMessageBus());
+
             services.AddMvc(setupAction => {
                 
                 var inputFormatter = setupAction.InputFormatters.OfType<JsonInputFormatter>().FirstOrDefault();
