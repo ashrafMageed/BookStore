@@ -4,11 +4,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using Books.API.Controllers;
 using Books.API.Controllers.Messaging;
+using Books.API.ShippingService;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -29,10 +31,22 @@ namespace Books.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            var dataBaseRoot = new InMemoryDatabaseRoot();
             services.AddDbContext<ApiContext>(opt => opt.UseInMemoryDatabase("BooksDb"));
             services.AddDbContext<OrderContext>(opt => opt.UseInMemoryDatabase("OrdersDb"));
+            services.AddDbContext<ShippingContext>(opt => opt.UseInMemoryDatabase("ShippingDb", dataBaseRoot));
+            services.AddTransient<PurchaseOrderReceivedHandler>();
+            var sp = services.BuildServiceProvider();
+            var bus = new InMemoryMessageBus(); 
+
+            var optionsBuilder = new DbContextOptionsBuilder<ShippingContext>();
+            optionsBuilder.UseInMemoryDatabase("ShippingDb", dataBaseRoot);
+            var context = new ShippingContext(optionsBuilder.Options);
+            var shippingOrderHandler = new PurchaseOrderReceivedHandler(bus, context);
+            bus.RegisterHandler<PurchaseOrderReceived>(e => shippingOrderHandler.Handle(e));
             
-            services.AddSingleton<InMemoryMessageBus>(new InMemoryMessageBus());
+            services.AddSingleton<InMemoryMessageBus>(bus);
+
 
             services.AddMvc(setupAction => {
                 
@@ -43,7 +57,7 @@ namespace Books.API
             });
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new Info { Title = "Books Service", Version = "v1" });
+                c.SwaggerDoc("v1", new Info { Title = "Books Store", Version = "v1" });
             });
         }
 
@@ -53,11 +67,15 @@ namespace Books.API
             if (env.IsDevelopment())
                 app.UseDeveloperExceptionPage();
             
+            // // bus.RegisterHandler<PurchaseOrderReceived>(e => shippingOrderHandler.Handle(e));
+            // var bus = app.ApplicationServices.GetService<InMemoryMessageBus>();
+            // var handler = new PurchaseOrderReceivedHandler(bus, app.ApplicationServices.GetService<ShippingContext>());
+            // bus.RegisterHandler<PurchaseOrderReceived>(e => handler.Handle(e));
 
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Books Service");
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Book Store");
                 c.RoutePrefix = String.Empty;
             });
 
